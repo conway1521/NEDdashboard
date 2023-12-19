@@ -1,10 +1,16 @@
 #========================================PACKAGES
 
-import json
+# *** JFC *** Notes 11-Dec-2023
+# Changes include:
+# - moved graph calculations into unique functions (choropleths, bar, sunflower, etc)
+# - made sure only the graph needed now is calculated
+# - memoized the graphs, so they are calculated once and re-used
+# - added some timing that can be removed later
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import Dash, dcc, html, Input, Output, State, callback
+from dash import dcc, html, Input, Output, State, callback
 import dash
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
@@ -14,9 +20,16 @@ from urllib.request import urlopen
 import json
 import pathlib
 from sklearn.preprocessing import MinMaxScaler
+import functools  # ***JFC*** - for memoization with lru_cache, used on plot functions
+import time  # ***JFC*** - for timing
 
+# ***JFC*** - timing access to the URL
+tic = time.perf_counter()
+print("Opening URL for geojson-counties-fips...")
 with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
     counties = json.load(response)
+toc = time.perf_counter()
+print(f"Time for urlopen() is {toc - tic:0.4f} secs")
 #========================================
 
 
@@ -24,6 +37,9 @@ with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-c
 # Layers
 
 location = pathlib.Path(__file__).parent.parent
+
+# ***JFC*** - timing set up of the page
+tic = time.perf_counter()
 
 df_p = pd.read_csv(f'{location}/assets/placedata.csv', dtype={'fips':str})
 df_hsc = pd.read_csv(f'{location}/assets/humansocialdata.csv', dtype={'fips':str})
@@ -69,7 +85,7 @@ df_pgraph_dict = {"envhealth":"iii. Environmental Health",
                   "skillbuilding":"ii. Density of Skill-building Centers"
 }
 df_pgraph_subj_dict = {"basic_needs":"ii. Basic Needs",
-                  "access":"ii. Access",
+                       "access":"ii. Access",
 }
 
 # human and social capital
@@ -235,9 +251,6 @@ for dictentry in df_p_dict:
     vector = subset.mean(axis=1, numeric_only=True)
     df_p_aggs[dictentry] = vector * 10
 df_p_aggs.insert(0, "county", df_county)
-
-
-
 
 # human and social capital
 df_hsc_aggs = pd.DataFrame()
@@ -740,51 +753,24 @@ layout = dbc.Container([
 #    footerbar
 ], fluid=False, className="dbc")
 
+# ***JFC*** - timing set up of the page
+toc = time.perf_counter()
+print(f"Time for all other stuff is {toc - tic:0.4f} secs")
 
 #-----------------------------------------------------------------------------------------------------------------------
 #Allows components to interact
-@callback(
-    Output("modal", "is_open"),
-    Input("open", "n_clicks"),
-    State("modal", "is_open"),
-)
-def toggle_modal(n1, is_open):
-    if n1:
-        return not is_open
-    return is_open
 
-@callback(     # number of outputs must equal number of returns below
-    Output(choro_graph, 'figure'),
-    Output(chorotitle, 'children'),
-    Output(chorotab_See, 'children'),
-    Output(chorotab_Mean, 'children'),
-    Input(choro_dropdown, 'value'),
-    Input(radio_mapbar, 'value'),
-    Input(radio_alpharank, 'value'),
-)
-
-
-
-def update_ca(choro_selected, radioitem_mapbar, radioitem_alpharank):
-
-
-    # Graph-title
-    def find_label_from_value(the_list:list, the_value:str) -> str:
-        the_label = [element["label"] for element in the_list if the_value in element.values()]
-        return the_label[0]
-
-    chorovalue = find_label_from_value(choromenu, choro_selected)
-
+@functools.lru_cache(maxsize=8)   # This memorizes the choropleths, so they are calculated once and saved
+def draw_choropleth(choro_selected):
     # Color
     if choro_selected == 'NED':
         chorocholor = 'temps_r'
-    elif choro_selected == 'p':
+    elif choro_selected == 'p':   # place-based conditions
         chorocholor = 'emrld'
-    elif choro_selected == "hsc":
+    elif choro_selected == "hsc": # human and social capital
         chorocholor = 'oryel'
-    else:
+    else:                         # e: economic activity
         chorocholor = 'ice_r'
-
     # Plotly express
     fig_choro = px.choropleth(df_pillars, geojson=counties, locations='fips', scope="usa", color=choro_selected,
                         color_continuous_scale=chorocholor,
@@ -800,6 +786,11 @@ def update_ca(choro_selected, radioitem_mapbar, radioitem_alpharank):
     )
     fig_choro.update_traces(hovertemplate='%{hovertext}: %{z:.1f}<extra></extra>')
 
+    return fig_choro
+
+
+@functools.lru_cache(maxsize=8)    # This memorizes bar plots, so they are calculated once and saved
+def draw_cabars(choro_selected, radioitem_alpharank):
     if choro_selected == 'NED':
         pillar_color = color_NED
     elif choro_selected == 'p':
@@ -838,13 +829,47 @@ def update_ca(choro_selected, radioitem_mapbar, radioitem_alpharank):
         )
     fig_cabars.update_traces(hovertemplate='%{x}: %{y:.1f}<extra></extra>')
 
+    return fig_cabars
+
+
+
+@callback(
+    Output("modal", "is_open"),
+    Input("open", "n_clicks"),
+    State("modal", "is_open"),
+)
+def toggle_modal(n1, is_open):
+    if n1:
+        return not is_open
+    return is_open
+
+
+@callback(     # number of outputs must equal number of returns below
+    Output(choro_graph, 'figure'),
+    Output(chorotitle, 'children'),
+    Output(chorotab_See, 'children'),
+    Output(chorotab_Mean, 'children'),
+    Input(choro_dropdown, 'value'),
+    Input(radio_mapbar, 'value'),
+    Input(radio_alpharank, 'value'),
+)
+def update_ca(choro_selected, radioitem_mapbar, radioitem_alpharank):
+# ***JFC*** - timing update_ca()
+    tic = time.perf_counter()
+
+    # Graph-title
+    def find_label_from_value(the_list:list, the_value:str) -> str:
+        the_label = [element["label"] for element in the_list if the_value in element.values()]
+        return the_label[0]
+
+    chorovalue = find_label_from_value(choromenu, choro_selected)
+
     if radioitem_mapbar == 'map':
-        fig_ca = fig_choro
+        fig_ca = draw_choropleth(choro_selected)
     else:
-        fig_ca = fig_cabars
+        fig_ca = draw_cabars(choro_selected, radioitem_alpharank)
 
-
-
+# Text for "What this shows" and "What this means"
     if choro_selected == 'NED':
         chorotab_s = chorotabSee_NED
         chorotab_m = chorotabMean_NED
@@ -858,15 +883,15 @@ def update_ca(choro_selected, radioitem_mapbar, radioitem_alpharank):
         chorotab_s = chorotabSee_e
         chorotab_m = chorotabMean_e
 
+# ***JFC*** - timing update_ca()
+    toc = time.perf_counter()
+    print(f"Time for update_ca() is {toc - tic:0.4f} secs")
+
     return fig_ca, '#### '+chorovalue+' Score', chorotab_s, chorotab_m
 
-@callback(     # number of outputs must equal number of returns below
-    Output(county_pillarsgraph, 'figure'),
-    Output(county_flower, 'figure'),
-    Output(county_top5bot5graph, 'figure'),
-    Input(county_dropdown, 'value'),
-)
-def update_counties(county_selected):
+
+@functools.lru_cache(maxsize=128)    # This memorizes plots, so they are calculated once and saved
+def draw_countpillars(county_selected):
     sf_pillars_slice = df_pillars.set_index('county').loc[county_selected]
     df_pillars_slice1 = pd.DataFrame({'Pillar': sf_pillars_slice.index, 'Score': sf_pillars_slice.values})
     df_pillars_slice2 = pd.DataFrame(df_pillars_slice1.loc[df_pillars_slice1['Pillar'].isin(['p', 'hsc', 'e'])])
@@ -887,18 +912,25 @@ def update_counties(county_selected):
                     'Score': True,  # add other column, customized formatting
                     },
     )
-    fig_countypillars.add_hline(y = NED_wavg, line_width=2.5, line_dash="dash", line_color=color_red, annotation_text = "NED Score CA avg.", annotation_font = dict({"color":"rgba(226,126,123,1)"}), annotation_bgcolor = "rgba(250, 251, 251, 0.35)")#, annotation_position = "top left")
+
+    fig_countypillars.add_hline(y = NED_wavg, line_width=2.5, line_dash="dash", line_color=color_red
+                                , annotation_text = "NED Score CA avg."
+                                , annotation_font = dict({"color":"rgba(226,126,123,1)"})
+                                , annotation_bgcolor = "rgba(250, 251, 251, 0.35)")   #, annotation_position = "top left")
     fig_countypillars.update_traces(marker=dict(line=dict(width=1,color='#1a1a1a')), marker_color=[color_p, color_hsc, color_e])
-    fig_countypillars.update_yaxes(range=[0, np.max(df_pillars['hsc'] + .1)], showgrid=False)
-    fig_countypillars.update_xaxes(tickmode = 'array', tickvals = df_pillars_slice2['Pillar'], ticktext = ["PbC", "HSC", "EA"])
+    fig_countypillars.update_yaxes(range=[0, np.max(df_pillars['hsc'] + .1)], showgrid=False, fixedrange=True)
+    fig_countypillars.update_xaxes(tickmode = 'array', tickvals = df_pillars_slice2['Pillar'], ticktext = ["PbC", "HSC", "EA"], fixedrange=True)
     fig_countypillars.update_layout(title="i. Pillar Scores", title_x=0.5, xaxis_title="Pillar", yaxis_title="Score", plot_bgcolor=color_graphbg)
-    fig_countypillars.layout.xaxis.fixedrange = True
-    fig_countypillars.layout.yaxis.fixedrange = True
+
+    return fig_countypillars
 
 
+@functools.lru_cache(maxsize=128)    # This memorizes plots, so they are calculated once and saved
+def draw_subjflower(county_selected):
 
     subject_slice = df_subjects.set_index('county').loc[county_selected].round(1)
     theta9 = [0, 40, 80, 120, 160, 200, 240, 280, 320]
+    NED_wavg = np.average(df_nedpillars["NED"], weights=df_pop_weight["pop_perc"])
 
     fig_subjflower = go.Figure(go.Barpolar(
         r=subject_slice,
@@ -941,14 +973,17 @@ def update_counties(county_selected):
     fig_subjflower.layout.yaxis.fixedrange = True
     fig_subjflower.update_polars(radialaxis=dict(visible=False), bgcolor=color_graphbg, angularaxis_showgrid = False, angularaxis_showline = False)
 
+    return fig_subjflower
 
+
+@functools.lru_cache(maxsize=128)    # This memorizes plots, so they are calculated once and saved
+def draw_fig_county5(county_selected):
     countyslice = df_topics_rank.set_index('county').loc[county_selected]
     bottom5 = countyslice.nlargest(n=15, keep='first')
     top5 = countyslice.nsmallest(n=15, keep='first')
 
     top5bottom5rank = pd.concat([top5, bottom5])  # Series of top5 and bottom 5, for the rank #
     top5bottom5neg = top5bottom5rank * (-1)  # Series of negative (for graphing)
-
 
     top5bottom5rank = top5bottom5rank.reset_index()  # prep for data frame
     top5bottom5neg = top5bottom5neg.reset_index()  # prep for data frame
@@ -959,26 +994,25 @@ def update_counties(county_selected):
     df_top5bottom5['pillars'] = pd.Series()
     df_top5bottom5['zeros'] = 0.075
 
-
     for index, row in df_top5bottom5.iterrows():
         current_rank = df_top5bottom5.iloc[index]['rank']
 
         to_add = 0.2
 
-        if index >=0 and index <= 14:
+        if index >= 0 and index <= 14:
             if index == 0:
                 df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index, 'zeros']
-            if index <= 14 and index >=1:
+            if index <= 14 and index >= 1:
                 prev_rank = df_top5bottom5.iloc[index + -1]['rank']
                 if current_rank == prev_rank:
-                    df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index-1, 'zeros'] + to_add
+                    df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index - 1, 'zeros'] + to_add
         else:
             if index == 15:
                 df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index, 'zeros']
             if index <= 29 and index >= 16:
                 prev_rank = df_top5bottom5.iloc[index + -1]['rank']
                 if current_rank == prev_rank:
-                    df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index-1, 'zeros'] + to_add
+                    df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index - 1, 'zeros'] + to_add
 
     for index in df_top5bottom5['index']:
         if index in df_e_dict:
@@ -989,54 +1023,73 @@ def update_counties(county_selected):
             df_top5bottom5.loc[df_top5bottom5['index'] == index, 'pillars'] = 'PbC'
 
     fig_county5 = px.scatter(df_top5bottom5, x='rank_neg', y='zeros', color='pillars',
-                     color_discrete_map={
-                         "PbC": color_p,
-                         "HSC": color_hsc,
-                         "EA": color_e
-                     },
-                     category_orders={"pillars": ["PbC", "HSC", "EA"]},
-                     # opacity=0.85,
-                     hover_name='index',
-                     hover_data={'rank_neg': False,  # remove from hover data
-                                 'zeros': False,
-                                 'pillars': False,  # add other column, default formatting
-                                 'rank': True,  # add other column, customized formatting
-                                 },
-                     )
+                             color_discrete_map={
+                                 "PbC": color_p,
+                                 "HSC": color_hsc,
+                                 "EA": color_e
+                             },
+                             category_orders={"pillars": ["PbC", "HSC", "EA"]},
+                             # opacity=0.85,
+                             hover_name='index',
+                             hover_data={'rank_neg': False,  # remove from hover data
+                                         'zeros': False,
+                                         'pillars': False,  # add other column, default formatting
+                                         'rank': True,  # add other column, customized formatting
+                                         },
+                             )
     fig_county5.update_traces(marker=dict(size=15,
-                                  line=dict(width=1,
-                                            color='#1a1a1a')),
-                      )
+                                          line=dict(width=1,
+                                                    color='#1a1a1a')),
+                              )
     fig_county5.update_xaxes(showgrid=False,
-                     range=[-59, 0],
-                     nticks=3,
-                     # tick0=-58, dtick=29,
-                     tickvals=[-58, -29, -1],
-                     ticktext=['58', '29', '1'],
-                     )
+                             range=[-59, 0],
+                             nticks=3,
+                             # tick0=-58, dtick=29,
+                             tickvals=[-58, -29, -1],
+                             ticktext=['58', '29', '1'],
+                             )
 
     fig_county5.update_yaxes(showgrid=False,
-                     range=[-0.15,np.max(df_top5bottom5['zeros']+.5)],
-                     zeroline=True, zerolinecolor='black', zerolinewidth=3,
-                     showticklabels=False,
-                     )
+                             range=[-0.15, np.max(df_top5bottom5['zeros'] + .5)],
+                             zeroline=True, zerolinecolor='black', zerolinewidth=3,
+                             showticklabels=False,
+                             )
     fig_county5.update_layout(
         title="iii. Topics Distribution by Score ranking",
         title_x=0.5,
         xaxis_title="Rank",
         yaxis_title="Frequency",
         legend_title="Pillar",
-#         legend = dict(
-#             orientation = "h",
-# #            yanchor = "bottom",
-# #            xanchor = "center",
-# #            xref = 'container'
-#         )
+        #         legend = dict(
+        #             orientation = "h",
+        # #            yanchor = "bottom",
+        # #            xanchor = "center",
+        # #            xref = 'container'
+        #         )
     )
     fig_county5.update_layout(height=400, plot_bgcolor=color_graphbg)
     fig_county5.layout.xaxis.fixedrange = True
     fig_county5.layout.yaxis.fixedrange = True
 
+    return fig_county5
 
+
+
+@callback(     # number of outputs must equal number of returns below
+    Output(county_pillarsgraph, 'figure'),
+    Output(county_flower, 'figure'),
+    Output(county_top5bot5graph, 'figure'),
+    Input(county_dropdown, 'value'),
+)
+def update_counties(county_selected):
+# ***JFC*** - timing update_counties()
+    tic = time.perf_counter()
+
+    fig_countypillars = draw_countpillars(county_selected)
+    fig_subjflower = draw_subjflower(county_selected)
+    fig_county5 = draw_fig_county5(county_selected)
+
+    toc = time.perf_counter()
+    print(f"Time for update_counties() is {toc - tic:0.4f} secs")
 
     return fig_countypillars, fig_subjflower, fig_county5
