@@ -149,7 +149,7 @@ pillarcirclesfig.update_layout(
    yaxis_title=None,
    showlegend=False,
 )
-pillarcirclesfig.update_layout(height=311, plot_bgcolor='white', font=dict(size=17))
+pillarcirclesfig.update_layout(height=315, plot_bgcolor='white', font=dict(size=17))
 
 
 pillar_circles = dcc.Graph(figure=pillarcirclesfig,config={'displayModeBar': False})
