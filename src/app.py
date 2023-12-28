@@ -107,4 +107,4 @@ def toggle_navbar_collapse(n, is_open):
 #Run the app
 if __name__ == '__main__':
 #   app.run_server(debug=False)
-   app.run(debug=True, host='127.0.0.1', port=8061)
+   app.run(debug=False, host='127.0.0.1', port=8061)

@@ -23,20 +23,51 @@ from sklearn.preprocessing import MinMaxScaler
 import functools  # ***JFC*** - for memoization with lru_cache, used on plot functions
 import time  # ***JFC*** - for timing
 
-# ***JFC*** - timing access to the URL
-tic = time.perf_counter()
-print("Opening URL for geojson-counties-fips...")
-with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
-    counties = json.load(response)
-toc = time.perf_counter()
-print(f"Time for urlopen() is {toc - tic:0.4f} secs")
+# Location of assets' parent
+
+location = pathlib.Path(__file__).parent.parent
+counties_geo_json_pathname = f'{location}/assets/counties-geo.json'
+counties_geo_json_URL = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json'
+
+# Function to read county geo json data from a local file, or URL (and save in local file for next time)
+def read_county_geo_data():
+    tic = time.perf_counter()
+
+    # Load counties geographic data from local file in assets, or from URL
+    print("Opening URL for geojson-counties-fips...")
+    counties = None
+    try:
+        with open(counties_geo_json_pathname, 'r') as counties_geo_json:
+            print('...reading from local file')
+            counties = json.load(counties_geo_json)
+    except IOError:
+        try:
+            with urlopen(counties_geo_json_URL) as response:
+                print('...reading from URL')
+                counties = json.load(response)
+                with open(counties_geo_json_pathname, 'w') as counties_geo_json:
+                    print('...saving to local file')
+                    json.dump(counties, counties_geo_json)
+        except IOError:
+            print(f"Unable to read counties geo json data from local file or URL:")
+            print(f"  Local file: {counties_geo_json_pathname}")
+            print(f"  URL: {counties_geo_json_URL}")
+
+    toc = time.perf_counter()
+    print(f"Time for read_county_geo_data() is {toc - tic:0.4f} secs")
+
+    return counties
+
+
 #========================================
 
 
 #========================================INPUTING AND CLEANING THE DATA
-# Layers
 
-location = pathlib.Path(__file__).parent.parent
+# County geo data from local file or URL
+counties = read_county_geo_data()
+
+# Layers
 
 # ***JFC*** - timing set up of the page
 tic = time.perf_counter()
@@ -76,16 +107,16 @@ df_p_dict = {"envhealth": ('fips', 'county', *getColNames(df_p_colnames, "water_
              }
 df_p_subj_dict = {"basic_needs": ('county', "envhealth", "foodhealth", "housing", "transport"),
                   "access": ('county', "access_bcb", "innovcreation", "skillbuilding")}
-df_pgraph_dict = {"envhealth":"iii. Environmental Health",
-                  "foodhealth":"iii. Food and Physical Health Security",
-                  "housing":"iii. Housing and Neighborhoods",
-                  "transport":"iii. Transportation",
-                  "access_bcb":"iii. Access to Finance Institutions, Childcare, and Broadband",
-                  "innovcreation":"iii. Density of Innovative Creation Organizations",
-                  "skillbuilding":"ii. Density of Skill-building Centers"
+df_pgraph_dict = {"envhealth":"Environmental Health",
+                  "foodhealth":"Food and Physical Health Security",
+                  "housing":"Housing and Neighborhoods",
+                  "transport":"Transportation",
+                  "access_bcb":"Access to Finance Institutions, Childcare, and Broadband",
+                  "innovcreation":"Density of Innovative Creation Organizations",
+                  "skillbuilding":"Density of Skill-building Centers"
 }
-df_pgraph_subj_dict = {"basic_needs":"ii. Basic Needs",
-                       "access":"ii. Access",
+df_pgraph_subj_dict = {"basic_needs":"Basic Needs",
+                       "access":"Access",
 }
 
 # human and social capital
@@ -98,14 +129,14 @@ df_hsc_dict = {"educattain": ('fips', 'county', *getColNames(df_hsc_colnames, "a
               }
 df_hsc_subj_dict = {"eductalent": ('county', "educattain", "schooling", "oppyouth"),
                    "socialcapital": ('county', "socialnet", "socialcohesion")}
-df_hscgraph_dict = {"educattain":"iii. Educational Attainment, current adults",
-                  "schooling":"iii. Schooling Outcomes, current students",
-                  "oppyouth":"iii. Transitional and Opportunity Youth",
-                  "socialnet":"iii. Social Networks",
-                  "socialcohesion":"iii. Social Cohesion"
+df_hscgraph_dict = {"educattain":"Educational Attainment, current adults",
+                  "schooling":"Schooling Outcomes, current students",
+                  "oppyouth":"Transitional and Opportunity Youth",
+                  "socialnet":"Social Networks",
+                  "socialcohesion":"Social Cohesion"
 }
-df_hscgraph_subj_dict = {"eductalent":"ii. Education and Talent",
-                  "socialcapital":"ii. Social Capital",
+df_hscgraph_subj_dict = {"eductalent":"Education and Talent",
+                  "socialcapital":"Social Capital",
 }
 
 # economic development
@@ -134,30 +165,30 @@ df_e_subj_dict = {"growthprosp": ('county', "size", "stdliving", "prod"),
                   "income": ('county', "hhinc", "poverty", "assistance", "incineq"),
                   "wealth": ('county', "homeown", "bank", "finresil"),
                   "busenv": ('county', "patents", "bus", "smallbusloan")}
-df_egraph_dict = {"size":"iii. Size of Local Economy",
-                  "stdliving":"iii. Standard of Living",
-                  "prod":"iii. Productivity",
-                  "jobs":"iii. Jobs",
-                  "emp": "iii. Employment",
-                  "u": "iii. Unemployment",
-                  "lf": "iii. Labor Force",
-                  "earn": "iii. Earnings",
-                  "hhinc": "iii. Household Income",
-                  "poverty": "iii. Poverty",
-                  "assistance": "iii. Budgetary Assistance",
-                  "incineq": "iii. Income Inequality",
-                  "homeown": "iii. Homeownership",
-                  "bank": "iii. Access to Wealth",
-                  "finresil": "iii. Financial Resilience",
-                  "patents": "iii. Patents",
-                  "bus": "iii. Business Establishments",
-                  "smallbusloan": "iii. Loans to Small Businesses"
+df_egraph_dict = {"size":"Size of Local Economy",
+                  "stdliving":"Standard of Living",
+                  "prod":"Productivity",
+                  "jobs":"Jobs",
+                  "emp": "Employment",
+                  "u": "Unemployment",
+                  "lf": "Labor Force",
+                  "earn": "Earnings",
+                  "hhinc": "Household Income",
+                  "poverty": "Poverty",
+                  "assistance": "Budgetary Assistance",
+                  "incineq": "Income Inequality",
+                  "homeown": "Homeownership",
+                  "bank": "Access to Wealth",
+                  "finresil": "Financial Resilience",
+                  "patents": "Patents",
+                  "bus": "Business Establishments",
+                  "smallbusloan": "Loans to Small Businesses"
 }
-df_egraph_subj_dict = {"growthprosp":"ii. Growth and Prosperity",
-                       "labormarket":"ii. Labor Market",
-                       "income": "ii. Household Income",
-                       "wealth": "ii. Household Wealth",
-                       "busenv": "ii. Business Environment",
+df_egraph_subj_dict = {"growthprosp":"Growth and Prosperity",
+                       "labormarket":"Labor Market",
+                       "income": "Household Income",
+                       "wealth": "Household Wealth",
+                       "busenv": "Business Environment",
 }
 
 df_tot_dict = {**df_p_dict, **df_hsc_dict, **df_e_dict}
@@ -762,6 +793,8 @@ print(f"Time for all other stuff is {toc - tic:0.4f} secs")
 
 @functools.lru_cache(maxsize=8)   # This memorizes the choropleths, so they are calculated once and saved
 def draw_choropleth(choro_selected):
+    tic = time.perf_counter()
+
     # Color
     if choro_selected == 'NED':
         chorocholor = 'temps_r'
@@ -785,6 +818,8 @@ def draw_choropleth(choro_selected):
         ),
     )
     fig_choro.update_traces(hovertemplate='%{hovertext}: %{z:.1f}<extra></extra>')
+    toc = time.perf_counter()
+    print(f"Time for draw_choropleth({choro_selected}) is {toc - tic:0.4f} secs")
 
     return fig_choro
 
@@ -830,6 +865,14 @@ def draw_cabars(choro_selected, radioitem_alpharank):
     fig_cabars.update_traces(hovertemplate='%{x}: %{y:.1f}<extra></extra>')
 
     return fig_cabars
+
+
+# def draw_all_choropleths():
+#     for which_choro in ["NED", "p", "hsc", "e"]:
+#         draw_choropleth(which_choro)
+# import threading
+# x = threading.Thread(target=draw_all_choropleths)
+# x.start()
 
 
 
@@ -914,7 +957,7 @@ def draw_countpillars(county_selected):
     )
 
     fig_countypillars.add_hline(y = NED_wavg, line_width=2.5, line_dash="dash", line_color=color_red
-                                , annotation_text = "NED Score CA avg."
+                                , annotation_text = "NED Score, CA avg."
                                 , annotation_font = dict({"color":"rgba(226,126,123,1)"})
                                 , annotation_bgcolor = "rgba(250, 251, 251, 0.35)")   #, annotation_position = "top left")
     fig_countypillars.update_traces(marker=dict(line=dict(width=1,color='#1a1a1a')), marker_color=[color_p, color_hsc, color_e])
@@ -928,34 +971,55 @@ def draw_countpillars(county_selected):
 @functools.lru_cache(maxsize=128)    # This memorizes plots, so they are calculated once and saved
 def draw_subjflower(county_selected):
 
-    subject_slice = df_subjects.set_index('county').loc[county_selected].round(1)
-    theta9 = [0, 40, 80, 120, 160, 200, 240, 280, 320]
+    subject_slice_series = df_subjects.set_index('county').loc[county_selected].round(1)   #pd.Series
+    subject_slice = pd.DataFrame({'subject': subject_slice_series.index, 'score': subject_slice_series.values})
+# Set full names of tooltip strings
+    subject_slice['tooltip_names'] = [df_totgraph_subj_dict[key] for key in subject_slice['subject']]
+
+    subject_slice['theta9'] = [0, 40, 80, 120, 160, 200, 240, 280, 320]
+    subject_slice['pillar'] = ['PbC', 'PbC', 'HSC', 'HSC', 'EA', 'EA', 'EA', 'EA', 'EA']
     NED_wavg = np.average(df_nedpillars["NED"], weights=df_pop_weight["pop_perc"])
 
-    fig_subjflower = go.Figure(go.Barpolar(
-        r=subject_slice,
-        theta=theta9,
-        width=[20, 20, 20, 20, 20, 20, 20, 20, 20],
-        marker_color=[color_p, color_p, color_hsc, color_hsc, color_e, color_e, color_e, color_e, color_e],
-        marker_line_color="rgba(26,26,26,255)",
-        marker_line_width=1,
-        opacity=0.8,
-        hoverinfo = 'all',
-        hovertemplate='%{custom_name}: %{r}<extra></extra>',
-        #customdata=[df_totgraph_subj_dict[i] for i in range(len(theta9))],  # Pass custom data for custom_name
-    ))
+# Plot the three traces for PbC, HSC and EA - this way to get three traces for the legend
+    fig_subjflower = go.Figure()
+    for pillar in subject_slice['pillar'].unique():
+        if pillar == 'PbC':
+            p_color = color_p
+        elif pillar == 'HSC':
+            p_color = color_hsc
+        elif pillar == 'EA':
+            p_color = color_e
+        else:
+            print(f"Borked! p_color has no value: pillar = {pillar}")
+            p_color = None
+
+        subject_pillar_slice = subject_slice[subject_slice['pillar'] == pillar]
+        fig_subjflower.add_trace(go.Barpolar(
+            r=subject_pillar_slice['score'],
+            theta=subject_pillar_slice['theta9'],
+            width=20,
+            marker_color=p_color,
+            marker_line_color="rgba(26,26,26,255)",
+            marker_line_width=1,
+            name=pillar,
+            opacity=0.8,
+            customdata=np.stack((subject_pillar_slice['tooltip_names'], subject_pillar_slice['tooltip_names']), axis=-1),
+            hovertemplate="%{customdata[0]}<br><br>Score=%{r:.1f}<extra></extra>",   # <extra></extra> removes "trace" label
+        ))
+
+# Draws dashed red circle at radius corresponding to CA average
     fig_subjflower.add_trace(go.Scatterpolar(
-        r= [NED_wavg.round(1), NED_wavg.round(1),NED_wavg.round(1),NED_wavg.round(1),NED_wavg.round(1),NED_wavg.round(1),NED_wavg.round(1),NED_wavg.round(1),NED_wavg.round(1),NED_wavg.round(1),],
-        theta=[0, 40, 80, 120, 160, 200, 240, 280, 320, 360],
+        r=[NED_wavg]*120,
+        theta=[i for i in range(0, 360, 3)],
         mode='lines',
-        name='NED avg.',
+        name='NED Score, CA avg.',
         line_color=color_red,
         line_dash='dot',
         line_width = 2,
         line_shape = 'spline',
         line_smoothing = 1.3,
         hoverinfo='text',  # Set hoverinfo to 'none' for this trace
-        hovertext=['NED Score CA avg.', 'NED Score CA avg.', 'NED Score CA avg.', 'NED Score CA avg.', 'NED Score CA avg.', 'NED Score CA avg.', 'NED Score CA avg.', 'NED Score CA avg.', 'NED Score CA avg.', 'NED Score CA avg.'],
+        hovertext=f'NED Score CA avg. {NED_wavg:0.1f}',
     ))
 
     fig_subjflower.update_layout(
@@ -966,7 +1030,8 @@ def draw_subjflower(county_selected):
             radialaxis=dict(range=[0, 8.5], showticklabels=False, ticks=''),
             angularaxis=dict(showticklabels=False, ticks='')
         ),
-        title = 'ii. Subject Scores'
+        title = 'ii. Subject Scores',
+        legend=dict(orientation='h')
     )
 
     fig_subjflower.layout.xaxis.fixedrange = True
@@ -978,79 +1043,58 @@ def draw_subjflower(county_selected):
 
 @functools.lru_cache(maxsize=128)    # This memorizes plots, so they are calculated once and saved
 def draw_fig_county5(county_selected):
-    countyslice = df_topics_rank.set_index('county').loc[county_selected]
-    bottom5 = countyslice.nlargest(n=15, keep='first')
-    top5 = countyslice.nsmallest(n=15, keep='first')
+    countysliceSeries = df_topics_rank.set_index('county').loc[county_selected]   #pd.Series
+    countyslice = pd.DataFrame({'index':countysliceSeries.index, 'Rank':countysliceSeries.values})
+    countyslice['pillars'] = pd.Series()
+    countyslice = countyslice.sort_values(by='Rank').reset_index(drop=True)
 
-    top5bottom5rank = pd.concat([top5, bottom5])  # Series of top5 and bottom 5, for the rank #
-    top5bottom5neg = top5bottom5rank * (-1)  # Series of negative (for graphing)
+    offsets = pd.Series(0.075, index=range(len(countyslice))) # will be updated to offset dots of same rank
+    to_add = 0.2  # vertical offset to avoid dots being drawn on top of each other
 
-    top5bottom5rank = top5bottom5rank.reset_index()  # prep for data frame
-    top5bottom5neg = top5bottom5neg.reset_index()  # prep for data frame
+    for index, row in countyslice.iterrows():
+        if index == 0:  # skip 0th row, can't compare with previous row
+            continue
+        current_rank = row['Rank']
+        prev_rank = countyslice.iloc[index-1]['Rank']
+        if current_rank == prev_rank:
+            offsets.loc[index] = offsets.loc[index-1] + to_add
+    countyslice['zeros'] = offsets
 
-    df_top5bottom5 = pd.merge(top5bottom5rank, top5bottom5neg, on='index')  # making data frame
-    df_top5bottom5.columns = ['index', 'rank', 'rank_neg']  # rename
-
-    df_top5bottom5['pillars'] = pd.Series()
-    df_top5bottom5['zeros'] = 0.075
-
-    for index, row in df_top5bottom5.iterrows():
-        current_rank = df_top5bottom5.iloc[index]['rank']
-
-        to_add = 0.2
-
-        if index >= 0 and index <= 14:
-            if index == 0:
-                df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index, 'zeros']
-            if index <= 14 and index >= 1:
-                prev_rank = df_top5bottom5.iloc[index + -1]['rank']
-                if current_rank == prev_rank:
-                    df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index - 1, 'zeros'] + to_add
-        else:
-            if index == 15:
-                df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index, 'zeros']
-            if index <= 29 and index >= 16:
-                prev_rank = df_top5bottom5.iloc[index + -1]['rank']
-                if current_rank == prev_rank:
-                    df_top5bottom5.loc[index, 'zeros'] = df_top5bottom5.loc[index - 1, 'zeros'] + to_add
-
-    for index in df_top5bottom5['index']:
+# Set colors of dots according to pillars
+    for index in countyslice['index']:
         if index in df_e_dict:
-            df_top5bottom5.loc[df_top5bottom5['index'] == index, 'pillars'] = 'EA'
+            countyslice.loc[countyslice['index'] == index, 'pillars'] = 'EA'
         elif index in df_hsc_dict:
-            df_top5bottom5.loc[df_top5bottom5['index'] == index, 'pillars'] = 'HSC'
+            countyslice.loc[countyslice['index'] == index, 'pillars'] = 'HSC'
         else:
-            df_top5bottom5.loc[df_top5bottom5['index'] == index, 'pillars'] = 'PbC'
+            countyslice.loc[countyslice['index'] == index, 'pillars'] = 'PbC'
 
-    fig_county5 = px.scatter(df_top5bottom5, x='rank_neg', y='zeros', color='pillars',
+# Set full names of tooltip strings
+    countyslice['tooltip_names'] = [df_totgraph_dict[key] for key in countyslice['index']]
+
+    fig_county5 = px.scatter(countyslice, x='Rank', y='zeros', color='pillars',
                              color_discrete_map={
                                  "PbC": color_p,
                                  "HSC": color_hsc,
                                  "EA": color_e
                              },
                              category_orders={"pillars": ["PbC", "HSC", "EA"]},
-                             # opacity=0.85,
-                             hover_name='index',
-                             hover_data={'rank_neg': False,  # remove from hover data
-                                         'zeros': False,
+                             hover_name='tooltip_names',
+                             hover_data={'zeros': False,
                                          'pillars': False,  # add other column, default formatting
-                                         'rank': True,  # add other column, customized formatting
+                                         'Rank': True,  # add other column, customized formatting
                                          },
                              )
-    fig_county5.update_traces(marker=dict(size=15,
-                                          line=dict(width=1,
-                                                    color='#1a1a1a')),
-                              )
+    fig_county5.update_traces(marker=dict(size=15, line=dict(width=1, color='#1a1a1a')),
+                             )
     fig_county5.update_xaxes(showgrid=False,
-                             range=[-59, 0],
+                             range=[59, 0.1],
                              nticks=3,
-                             # tick0=-58, dtick=29,
-                             tickvals=[-58, -29, -1],
+                             tickvals=[58, 29, 1],
                              ticktext=['58', '29', '1'],
                              )
-
     fig_county5.update_yaxes(showgrid=False,
-                             range=[-0.15, np.max(df_top5bottom5['zeros'] + .5)],
+                             range=[-0.15, np.max(countyslice['zeros'] + 0.15)],
                              zeroline=True, zerolinecolor='black', zerolinewidth=3,
                              showticklabels=False,
                              )
@@ -1060,19 +1104,12 @@ def draw_fig_county5(county_selected):
         xaxis_title="Rank",
         yaxis_title="Frequency",
         legend_title="Pillar",
-        #         legend = dict(
-        #             orientation = "h",
-        # #            yanchor = "bottom",
-        # #            xanchor = "center",
-        # #            xref = 'container'
-        #         )
     )
     fig_county5.update_layout(height=400, plot_bgcolor=color_graphbg)
     fig_county5.layout.xaxis.fixedrange = True
     fig_county5.layout.yaxis.fixedrange = True
 
     return fig_county5
-
 
 
 @callback(     # number of outputs must equal number of returns below
