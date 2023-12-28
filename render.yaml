@@ -3,7 +3,7 @@ services:
   - type: web
     name: ned-dashboard
     env: python
-    plan: starter
+    plan: free #starter for the paid $7 plan
     # A requirements.txt file must exist
     buildCommand: pip install -r requirements.txt
     # A src/app.py file must exist and contain `server=app.server`
