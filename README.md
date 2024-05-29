@@ -1,4 +1,4 @@
-# NEDdashboard
+# New Economic Development (NED) dashboard
 ### Abstract
 What does local economic development look like when considering household needs and the ecosystem around them rather than traditional metrics? Enter the New Economic Development (NED) Dashboard, an interdisciplinary quantitative assessement tool for researchers and local policymakers to explore economic development status geographically along dimensions that better represent the channels for equitable, durable development. The NED framework learns from frontier economic research and combines qualitative findings from agencies involved in local development to represent the characteristics of inclusive economies as well as the needs of communities to successfully tap into prosperity. By compiling and representing key tenents into a barometer, the NED Dashboard quantitatively measures the ecosystem that enables inclusive, sustainable, and resilient prosperity.
 
