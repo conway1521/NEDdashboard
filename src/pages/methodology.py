@@ -4,7 +4,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
 load_figure_template("lux")
-import plotly_express as px
+import plotly.express as px
 import pathlib
 
 location = pathlib.Path(__file__).parent.parent

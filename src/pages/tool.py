@@ -18,15 +18,16 @@ load_figure_template("lux")
 import numpy as np
 from urllib.request import urlopen
 import json
-import pathlib
-from sklearn.preprocessing import MinMaxScaler
+from pathlib import Path
 import functools  # ***JFC*** - for memoization with lru_cache, used on plot functions
 import time  # ***JFC*** - for timing
 
-# Location of assets' parent
+# Get the correct paths - since tool.py is in pages directory
+ROOT_DIR = Path(__file__).parent.parent  # Go up two levels: from pages to src
+ASSETS_DIR = ROOT_DIR / 'assets'
 
-location = pathlib.Path(__file__).parent.parent
-counties_geo_json_pathname = f'{location}/assets/counties-geo.json'
+# Define the counties geojson path
+counties_geo_json_pathname = ASSETS_DIR / 'counties-geo.json'
 counties_geo_json_URL = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json'
 
 # Function to read county geo json data from a local file, or URL (and save in local file for next time)
@@ -72,9 +73,9 @@ counties = read_county_geo_data()
 # ***JFC*** - timing set up of the page
 tic = time.perf_counter()
 
-df_p = pd.read_csv(f'{location}/assets/placedata.csv', dtype={'fips':str})
-df_hsc = pd.read_csv(f'{location}/assets/humansocialdata.csv', dtype={'fips':str})
-df_e = pd.read_csv(f'{location}/assets/econdata.csv', dtype={'fips':str})
+df_p = pd.read_csv(ASSETS_DIR / 'placedata.csv', dtype={'fips': str})
+df_hsc = pd.read_csv(ASSETS_DIR / 'humansocialdata.csv', dtype={'fips': str})
+df_e = pd.read_csv(ASSETS_DIR / 'econdata.csv', dtype={'fips': str})
 
 df_first2 = pd.merge(df_p, df_hsc, on='fips', how='inner')
 df_tot = pd.merge(df_first2, df_e, on='fips', how='inner')
@@ -82,9 +83,7 @@ df_tot = df_tot.drop(columns=['county', 'county_y'])
 df_tot.rename(columns={"county_x": "county"}, inplace=True)
 
 # Other
-df_indices = pd.read_csv(f'{location}/assets/indices.csv', dtype={'fips':str})
-df_industry = pd.read_csv(f'{location}/assets/industrydata.csv', dtype={'fips':str})
-df_pop_weight = pd.read_csv(f'{location}/assets/popweightdata.csv', dtype={'fips':str})
+df_pop_weight = pd.read_csv(ASSETS_DIR / 'popweightdata.csv', dtype={'fips': str})
 # ------------------------------------------------------------------------------------------------------------
 # SETTING UP TOPIC DICTIONARY
 def getColNames(allColNames: list, startName: str, endName: str) -> list:
@@ -207,11 +206,7 @@ df_county = df_tot.iloc[:, 1]
 
 # place
 df_p_toscale = df_p.iloc[:, 2:]
-scaler = MinMaxScaler()
-scaler.fit(df_p_toscale)
-MinMaxScaler()
-df_p_n = scaler.transform(df_p_toscale)
-df_p_n = pd.DataFrame(df_p_n, columns=df_p_toscale.columns)
+df_p_n = (df_p_toscale - df_p_toscale.min()) / (df_p_toscale.max() - df_p_toscale.min()).replace(0, 1)
 df_p_n = pd.concat([df_fipscounty, df_p_n], axis=1)
 df_p_n["water_violation"] = (1 - df_p_n["water_violation"])
 df_p_n["particulate_matter"] = (1 - df_p_n["particulate_matter"])
@@ -231,11 +226,7 @@ df_p_n["access_broadband"] = (1-df_p_n["access_broadband"])
 
 # human and social capital
 df_hsc_toscale = df_hsc.iloc[:, 2:]
-scaler = MinMaxScaler()
-scaler.fit(df_hsc_toscale)
-MinMaxScaler()
-df_hsc_n = scaler.transform(df_hsc_toscale)
-df_hsc_n = pd.DataFrame(df_hsc_n, columns=df_hsc_toscale.columns)
+df_hsc_n = (df_hsc_toscale - df_hsc_toscale.min()) / (df_hsc_toscale.max() - df_hsc_toscale.min()).replace(0, 1)
 df_hsc_n = pd.concat([df_fipscounty, df_hsc_n], axis=1)
 df_hsc_n["suspensions"] = (1 - df_hsc_n["suspensions"])
 df_hsc_n["juvenile_felony"] = (1 - df_hsc_n["juvenile_felony"])
@@ -243,11 +234,7 @@ df_hsc_n["discon_youth"] = (1 - df_hsc_n["discon_youth"])
 
 #econ dev
 df_e_toscale = df_e.iloc[:, 2:]
-scaler = MinMaxScaler()
-scaler.fit(df_e_toscale)
-MinMaxScaler()
-df_e_n = scaler.transform(df_e_toscale)
-df_e_n = pd.DataFrame(df_e_n, columns=df_e_toscale.columns)
+df_e_n = (df_e_toscale - df_e_toscale.min()) / (df_e_toscale.max() - df_e_toscale.min()).replace(0, 1)
 df_e_n = pd.concat([df_fipscounty, df_e_n], axis=1)
 df_e_n["jobs_unstable_prop"] = (1 - df_e_n["jobs_unstable_prop"])
 df_e_n["u"] = (1 - df_e_n["u"])
@@ -465,12 +452,6 @@ df_pillars = df_pillars.round(1)
 
 df_subjects = df_tot_subj_aggs.copy()
 
-df_topics = df_tot_aggs.copy()
-df_topics.insert(1, 'fips', df_fipscounty.iloc[:,0])
-df_topics = df_topics.round(1)
-
-df_subjects_rank = df_tot_subj_rank.copy()
-
 df_topics_rank = df_tot_rank.copy()
 
 
@@ -480,6 +461,20 @@ choromenu: list = [
                     {"label": "i. Human and Social Capital", "value": "hsc"},
                     {"label": "i. Economic Activity", "value": "e"}
 ]
+choromenu_dict = {item['value']: item['label'] for item in choromenu}
+
+NED_wavg = np.average(df_nedpillars["NED"], weights=df_pop_weight["pop_perc"])
+p_wavg = np.average(df_nedpillars["p"], weights=df_pop_weight["pop_perc"])
+hsc_wavg = np.average(df_nedpillars["hsc"], weights=df_pop_weight["pop_perc"])
+e_wavg = np.average(df_nedpillars["e"], weights=df_pop_weight["pop_perc"])
+p_hsc_e_wavgs = [p_wavg, hsc_wavg, e_wavg]
+
+flower_theta9 = [0, 40, 80, 120, 160, 200, 240, 280, 320]
+flower_pillars = ['PbC', 'PbC', 'HSC', 'HSC', 'EA', 'EA', 'EA', 'EA', 'EA']
+flower_scatter_theta = list(range(0, 360, 3))
+
+index_to_pillar = {**{k: 'EA' for k in df_e_dict}, **{k: 'HSC' for k in df_hsc_dict}, **{k: 'PbC' for k in df_p_dict}}
+index_to_label = df_totgraph_dict.copy()
 
 countymenu: list = []
 for index, row_name in enumerate(df_county):
@@ -900,12 +895,7 @@ def update_ca(choro_selected, radioitem_mapbar, radioitem_alpharank):
 # ***JFC*** - timing update_ca()
     tic = time.perf_counter()
 
-    # Graph-title
-    def find_label_from_value(the_list:list, the_value:str) -> str:
-        the_label = [element["label"] for element in the_list if the_value in element.values()]
-        return the_label[0]
-
-    chorovalue = find_label_from_value(choromenu, choro_selected)
+    chorovalue = choromenu_dict.get(choro_selected, choro_selected)
 
     if radioitem_mapbar == 'map':
         fig_ca = draw_choropleth(choro_selected)
@@ -937,15 +927,10 @@ def update_ca(choro_selected, radioitem_mapbar, radioitem_alpharank):
 def draw_countpillars(county_selected):
     sf_pillars_slice = df_pillars.set_index('county').loc[county_selected]
     df_pillars_slice1 = pd.DataFrame({'Pillar': sf_pillars_slice.index, 'Score': sf_pillars_slice.values})
-    df_pillars_slice2 = pd.DataFrame(df_pillars_slice1.loc[df_pillars_slice1['Pillar'].isin(['p', 'hsc', 'e'])])
-
-    NED_wavg = np.average(df_nedpillars["NED"], weights=df_pop_weight["pop_perc"])
-    p_wavg = np.average(df_nedpillars["p"], weights=df_pop_weight["pop_perc"])
-    hsc_wavg = np.average(df_nedpillars["hsc"], weights=df_pop_weight["pop_perc"])
-    e_wavg = np.average(df_nedpillars["e"], weights=df_pop_weight["pop_perc"])
+    df_pillars_slice2 = df_pillars_slice1.loc[df_pillars_slice1['Pillar'].isin(['p', 'hsc', 'e'])].copy()
 
     df_pillars_slice2["Pillar"] = ["Place-based Conditions", "Human and Social Capital", "Economic Activity"]
-    df_pillars_slice2["Average"] = [p_wavg, hsc_wavg, e_wavg]
+    df_pillars_slice2["Average"] = p_hsc_e_wavgs
 
     # Plotly express
     fig_countypillars = px.bar(
@@ -976,9 +961,8 @@ def draw_subjflower(county_selected):
 # Set full names of tooltip strings
     subject_slice['tooltip_names'] = [df_totgraph_subj_dict[key] for key in subject_slice['subject']]
 
-    subject_slice['theta9'] = [0, 40, 80, 120, 160, 200, 240, 280, 320]
-    subject_slice['pillar'] = ['PbC', 'PbC', 'HSC', 'HSC', 'EA', 'EA', 'EA', 'EA', 'EA']
-    NED_wavg = np.average(df_nedpillars["NED"], weights=df_pop_weight["pop_perc"])
+    subject_slice['theta9'] = flower_theta9
+    subject_slice['pillar'] = flower_pillars
 
 # Plot the three traces for PbC, HSC and EA - this way to get three traces for the legend
     fig_subjflower = go.Figure()
@@ -1010,7 +994,7 @@ def draw_subjflower(county_selected):
 # Draws dashed red circle at radius corresponding to CA average
     fig_subjflower.add_trace(go.Scatterpolar(
         r=[NED_wavg]*120,
-        theta=[i for i in range(0, 360, 3)],
+        theta=flower_scatter_theta,
         mode='lines',
         name='NED Score, CA avg.',
         line_color=color_red,
@@ -1045,32 +1029,15 @@ def draw_subjflower(county_selected):
 def draw_fig_county5(county_selected):
     countysliceSeries = df_topics_rank.set_index('county').loc[county_selected]   #pd.Series
     countyslice = pd.DataFrame({'index':countysliceSeries.index, 'Rank':countysliceSeries.values})
-    countyslice['pillars'] = pd.Series()
+    # Sort by Rank to ensure offsets are calculated correctly
     countyslice = countyslice.sort_values(by='Rank').reset_index(drop=True)
 
-    offsets = pd.Series(0.075, index=range(len(countyslice))) # will be updated to offset dots of same rank
-    to_add = 0.2  # vertical offset to avoid dots being drawn on top of each other
+    # Vectorized offset calculation
+    countyslice['cumcount'] = countyslice.groupby('Rank').cumcount()
+    countyslice['zeros'] = 0.075 + (countyslice['cumcount'] * 0.2)
 
-    for index, row in countyslice.iterrows():
-        if index == 0:  # skip 0th row, can't compare with previous row
-            continue
-        current_rank = row['Rank']
-        prev_rank = countyslice.iloc[index-1]['Rank']
-        if current_rank == prev_rank:
-            offsets.loc[index] = offsets.loc[index-1] + to_add
-    countyslice['zeros'] = offsets
-
-# Set colors of dots according to pillars
-    for index in countyslice['index']:
-        if index in df_e_dict:
-            countyslice.loc[countyslice['index'] == index, 'pillars'] = 'EA'
-        elif index in df_hsc_dict:
-            countyslice.loc[countyslice['index'] == index, 'pillars'] = 'HSC'
-        else:
-            countyslice.loc[countyslice['index'] == index, 'pillars'] = 'PbC'
-
-# Set full names of tooltip strings
-    countyslice['tooltip_names'] = [df_totgraph_dict[key] for key in countyslice['index']]
+    countyslice['pillars'] = countyslice['index'].map(index_to_pillar)
+    countyslice['tooltip_names'] = countyslice['index'].map(index_to_label)
 
     fig_county5 = px.scatter(countyslice, x='Rank', y='zeros', color='pillars',
                              color_discrete_map={

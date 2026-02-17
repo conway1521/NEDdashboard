@@ -2,17 +2,37 @@ import dash
 from dash import html, dcc, Dash, Input, Output, State
 import dash_bootstrap_components as dbc
 import base64
-import pathlib
+from pathlib import Path
+import os
+import signal
+import sys
 
-#important code: source /Users/ali/Dropbox/Dashboard/Python_normAggregation/venv-3.11/bin/activate
-location = pathlib.Path(__file__).parent
+# Get the project root directory
+ROOT_DIR = Path(__file__).parent
+ASSETS_DIR = ROOT_DIR / 'assets'
 
-app = Dash(__name__, use_pages = True, external_stylesheets=[dbc.themes.LUX])
+def signal_handler(signum, frame):
+    """Handle shutdown signals"""
+    print("Shutting down...")
+    # Remove PID file if it exists
+    pid_file = Path(ROOT_DIR).parent / 'dashboard.pid'
+    if pid_file.exists():
+        pid_file.unlink()
+    sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
+
+# Your existing app setup
+app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.LUX])
 server = app.server
 
-#elements
-NED_logo = f'{location}/assets/Oikos2.png'
-NED_logo_base64 = base64.b64encode(open(NED_logo, 'rb').read()).decode('ascii')
+
+# Load logo using Path
+logo_path = ASSETS_DIR / 'Oikos2.png'
+with open(logo_path, 'rb') as f:
+    NED_logo_base64 = base64.b64encode(f.read()).decode('ascii')
 
 linksbar = dbc.Row(
     [
@@ -106,5 +126,4 @@ def toggle_navbar_collapse(n, is_open):
 
 #Run the app
 if __name__ == '__main__':
-#   app.run_server(debug=False)
-   app.run(debug=False, host='127.0.0.1', port=8061)
+    app.run(debug=False, host='127.0.0.1', port=8061)
