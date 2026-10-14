@@ -27,7 +27,7 @@ color_e = "#209bcf"
 color_red = "rgba(226,126,123,255)"
 
 # data
-df_treemap = pd.read_csv(f'{location}/assets/df_treemap.csv')
+df_treemap = pd.read_csv(location.parent / 'docs' / 'data' / 'df_treemap.csv')
 df_treemap = df_treemap.drop('Unnamed: 0', axis=1)
 colorscale_phsce = [color_e,color_p,color_hsc]
 

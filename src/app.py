@@ -9,7 +9,7 @@ import sys
 
 # Get the project root directory
 ROOT_DIR = Path(__file__).parent
-ASSETS_DIR = ROOT_DIR / 'assets'
+ASSETS_DIR = ROOT_DIR.parent / 'docs' / 'assets'
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""

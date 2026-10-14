@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Methodology</title>
+  <meta name="description" content="OIKOS New Economic Development (NED): an interactive assessment of inclusive economic development across California's 58 counties.">
+  <link rel="icon" href="assets/Oikos2.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/lux/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="methodology">
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="./">
+        <img src="assets/Oikos2.png" alt="">
+        <span style="color:#fafafa">OIKOS &ndash; New Economic Development</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navlinks" aria-controls="navlinks" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navlinks">
+        <ul class="navbar-nav ms-auto align-items-md-center">
+          <li class="nav-item"><a class="nav-link" href="https://conway1521.github.io/" target="_blank" rel="noopener">About the author</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Menu</a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="./">NED Tool</a></li>
+              <li><a class="dropdown-item" href="about.html">About this tool</a></li>
+              <li><a class="dropdown-item" href="methodology.html">Methodology</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h3 class="section mt-0">General methodology</h3>
+    <p>The New Economic Development (NED) Index provides a barometer of three key Pillars of equitable local and regional economic development: Place-based Conditions, Human Capital, and Economic Activity. Through this lens, economic development is represented not as a singular value but rather as three mutually inclusive dimensions.</p>
+    <p>NED includes 83 variables spanning the breadth of the factors of inclusive sustainable local economic growth and wellbeing derived from economic and social science research along with field-generated learning. These are then aggregated by relatedness into 30 Subjects, themselves forming 9 Topics.</p>
+
+    <h4 class="mt-4">Data</h4>
+    <p>The main data sources are the US Census Bureau data (namely the American Community Survey 5-year Estimates, Quarterly Workforce Indicators, Prosperity Now Scorecard, US Bureau of Economic Analysis, Federal Financial Institutions Examination Council, US Patent and Trademark Office, California County Health Records, Homeless Data Integration System (HDIS), National Eviction Lab, California Department of Education, Measure for America, and Opportunity Insights.</p>
+    <p>2018 data was used for two reasons: firstly, I wanted to use a full-year of widely available indicators pre-pandemic. This year worked particularly because I wanted to include the significant dataset that <a href="https://socialcapital.org" target="_blank" rel="noopener">Chetty <em>et al</em>, 2022</a> recently published. Having the Social Cohesion information adds a significant dimension to the interconnectedness of households in the economic development ecosystem.</p>
+    <p>The methodology of aggregating variables into Subjects, Topics, and Pillars is similar to that used by the OECD in their <a href="https://www.oecdbetterlifeindex.org" target="_blank" rel="noopener">Better Life Index</a> and the original <a href="https://hdr.undp.org/system/files/documents/technical-notes-calculating-human-development-indices.pdf" target="_blank" rel="noopener">Human Development Index (HDI)</a>. Whereas the current HDI methodology involves geometric mean averaging, it also brings up significant issues (for well-explained discussions, see Martin Ravallion's <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1713611" target="_blank" rel="noopener">2010 paper</a> or Sudhir Anand's <a href="https://hdr.undp.org/content/recasting-human-development-measures" target="_blank" rel="noopener">2018 paper</a>). In essence, keeping a simple arithmetic mean method allows for equal weighting to be assigned to each category without assigning any substitutative value for increases or decreases, which the geometric mean implies.</p>
+
+    <h4 class="mt-4">Inequality-adjustment</h4>
+    <p>Current HDI work has however introduced an interesting metric, the Inequality-adjusted HDI or IHDI, which adds a distritbuional dimension to the average attainments of each indicator. By calculating an Atkinson measure of inequality for each indicator and subsequently using it to weigh the HDI indicators, the spread of outcomes within indicators is taken into account. In other words, while the HDI provides a mean, it ignores the distribution of outcomes across the population it represents. IHDI captures the inequality within each component of human development. However, in order to do so, data <em>at least</em> one level of granularity below the given component's is required (<em>i.e.</em>, a state's IHDI score requires county-level data, or a county's needs census tract data). Due to the lack of more granularity in the NED Dataset, calculating the Atkinson measure of inequality was not possible.</p>
+    <p>Nevertheless, a simpler way is devised for adding inequity to the NED dashboard: differences in demographic and other characteristics weigh the calculation of the Subjects. For example, the Employment Subject combines <em>Employment-to-population</em>, <em>College attainment employment-to-population gap</em>, and <em>16-29 years vs. 30-64 years employment-to-population gap</em> variables; the Earnings Subject weighs <em>Average earnings</em> with <em>Black-White average earning gap</em>, <em>Male-female earning gap</em>, and <em>Black-White earning gap from stable jobs</em>; or Homeownership is weighted by <em>Black-White homeownership gap</em> and <em>High-school attainment homeownership gap</em>. The NED dashboard's aggregate descriptors of development are thus nuanced by some of the distributional outcomes that exist within its indicators. And again, by using a simple arithmetic average no assumptions are made about the significance of this ponderance. This inequality-adjustment process is preliminary, and deepening it could be the subject of future work.</p>
+    <p>Inequality-adjusting does have some important considerations to keep in mind.</p>
+    <p>By being based on the Atkinson measure of Inequality, IHDI satisfies 'subgroup consistency'. This property ensures that improvements (deteriorations) in the distribution of human development within only a certain group of the society imply improvements (deteriorations) in the distribution across the entire society. While not intended yet to carry the same standardisation weight, the inequality-adjustment of the NED Dashboard cannot claim the same. One of the main drawbacks of inequality-adjustment like the IHDI is that it is not 'association sensitive', which means that it cannot capture any overlapping inequalities. To rectify this, a full dataset from the same sources is required, which is not the case with the current NED Dashboard (or the IHDI), but in this work's case may become possible with more refinement.</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span>Copyright &copy; 2023 Alessandro Conway. All rights reserved.</span>
+      <a href="#">Return to top</a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

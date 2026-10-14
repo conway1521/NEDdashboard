@@ -17,8 +17,16 @@ Nine indicator categories follow from this: Basic Needs, Access, Education and T
 
 ## Data
 
-County-level input data is not committed to this repository. The `src/` directory contains the data pipeline and aggregation logic. Data sources include the American Community Survey, BLS LAUS, FDIC, FCC, and several CDC and EPA datasets.
+The county-level input data is in `docs/data/`, and the aggregation logic is in `src/pages/tool.py` (mirrored in `docs/assets/ned-data.js`). Data sources include the American Community Survey, BLS LAUS, FDIC, FCC, and several CDC and EPA datasets.
 
 ## Deployment
 
-This project is configured for Render (`render.yaml` included). The live deployment is at [NED Dashboard](https://neddashboard.onrender.com). _N.b., it takes a bit to load upon the first time, about 1.5-2 minutes._
+The live dashboard is a static site served by GitHub Pages from the `docs/` folder: [NED Dashboard](https://conway1521.github.io/NEDdashboard/). It loads instantly, with no server or cold start.
+
+- `docs/assets/ned-data.js` is a JavaScript port of the scoring pipeline in `src/pages/tool.py` (normalisation, Topic/Subject/Pillar aggregation, rankings and population-weighted averages). Its output matches the Python version exactly.
+- `docs/assets/ned-app.js` draws the charts with Plotly.js.
+- `docs/data/` holds the county input data and geometry. Both the static site and the Python app read from it, so there is one copy to update.
+
+To preview locally, run `python3 -m http.server -d docs` and open http://localhost:8000.
+
+The original Python/Dash app is kept in `src/` for reference and can be run locally with `pip install -r requirements.txt` and `python src/app.py` (Python 3.10, matching the pinned 2023 dependencies).

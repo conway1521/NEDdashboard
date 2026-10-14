@@ -24,7 +24,7 @@ import time  # ***JFC*** - for timing
 
 # Get the correct paths - since tool.py is in pages directory
 ROOT_DIR = Path(__file__).parent.parent  # Go up two levels: from pages to src
-ASSETS_DIR = ROOT_DIR / 'assets'
+ASSETS_DIR = ROOT_DIR.parent / 'docs' / 'data'  # shared with the static site
 
 # Define the counties geojson path
 counties_geo_json_pathname = ASSETS_DIR / 'counties-geo.json'

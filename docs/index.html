@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Economic Development</title>
+  <meta name="description" content="OIKOS New Economic Development (NED): an interactive assessment of inclusive economic development across California's 58 counties.">
+  <link rel="icon" href="assets/Oikos2.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/lux/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="tool">
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="./">
+        <img src="assets/Oikos2.png" alt="">
+        <span style="color:#fafafa">OIKOS &ndash; New Economic Development</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navlinks" aria-controls="navlinks" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navlinks">
+        <ul class="navbar-nav ms-auto align-items-md-center">
+          <li class="nav-item"><a class="nav-link" href="https://conway1521.github.io/" target="_blank" rel="noopener">About the author</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Menu</a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="./">NED Tool</a></li>
+              <li><a class="dropdown-item" href="about.html">About this tool</a></li>
+              <li><a class="dropdown-item" href="methodology.html">Methodology</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1 class="ned-title">The NED Interactive Tool</h1>
+
+    <p>Individuals' lived experience and local conditions are increasingly understood as key components of a community's economic development. But what constitutes inclusive, sustainable, and effective local economic development? How can policymakers, researchers, and social entrepreneurs understand this fuller regional development lens, identify areas of opportunity, and come up with successful strategies? Aside from few local examples, no such comprehensive, nationally scalable assessment exists.</p>
+    <p>The New Economic Development (NED) tool does just that.</p>
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+      <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#ned-modal">The NED Approach</button>
+    </div>
+
+    <div class="modal fade" id="ned-modal" tabindex="-1" aria-labelledby="ned-modal-title" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="ned-modal-title">Inclusive, Sustainable, and Effective Economic Growth</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>NED combines frontier interdisciplinary research with key field-derived learning to represent the drivers of inclusive economic development through three distinct Pillars.</p>
+            <div id="modal-circles" class="graph" style="min-height:320px"></div>
+            <div class="row">
+              <div class="col-md-4"><p>...refer to the physical foundation upon which people live. Health, environment, and access are factored along with other metrics of thriving communities.</p></div>
+              <div class="col-md-4"><p>...cover the enablers of development given by individual education to social affiliation. This includes training pipelines and the strength of networks.</p></div>
+              <div class="col-md-4"><p>...represents material and financial prosperity, potential, and resilience. This is the 'size of the local economic pie' and how its 'slices' are distributed.</p></div>
+            </div>
+            <p>The NED Pillars (notated with an <em>i.</em> for clarity) are made up of Subjects (<em>ii.</em>) covering their relevant categories, which are themselves composed of Topics (<em>iii.</em>), composites of measured data.</p>
+            <p>Crucially, the balance of indicator levels across these three Pillars is what determines a place's standing. <em>Delve deeper in the <a href="about.html">About this tool</a> page.</em></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <blockquote class="lede" id="toCA">
+      From granular US census, business, workforce, and social networks data, evaluate and compare local economic development the NED way across California's 58 counties based on 30 essential topics for material living conditions and equitable quality of life. Select either the <a href="#ca">California</a> or the individual <a href="#toCounty">County</a> views below.
+    </blockquote>
+
+    <!-- California view -->
+    <h3 class="section" id="ca">California NED</h3>
+    <p>See how inclusive economic development is distributed across California. Each of the three Pillars (<em>i.</em>) are presented individually and as an averaged general NED score, which serves as a benchmark and a comparison to common single development metrics like Gross Regional Product or the Human Development Index.</p>
+    <p><em>Select a dimension from the menu below, and use the buttons above it to toggle between the Map and Bar chart.</em></p>
+
+    <div class="chart-head">
+      <h4 id="choro-title">New Economic Development Score</h4>
+      <h6><em>Sources in <a href="methodology.html">Methodology</a></em></h6>
+    </div>
+    <div id="choro-graph" class="graph"><div class="loading">Loading the NED data&hellip;</div></div>
+
+    <div class="row justify-content-center my-3">
+      <div class="col-md-6">
+        <label class="visually-hidden" for="choro-select">Dimension</label>
+        <select id="choro-select" class="form-select">
+          <option value="NED" selected>New Economic Development</option>
+          <option value="p">i. Place-based Conditions</option>
+          <option value="hsc">i. Human and Social Capital</option>
+          <option value="e">i. Economic Activity</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="mb-2">
+        <span class="me-3">Display:</span>
+        <label><input class="form-check-input" type="radio" name="mapbar" value="map" checked> Map</label>
+        <label><input class="form-check-input" type="radio" name="mapbar" value="bar"> Bar chart (rankings).</label>
+      </div>
+      <div class="mb-4">
+        <span class="me-3">Display counties of Bar chart</span>
+        <label><input class="form-check-input" type="radio" name="alpharank" value="alph" checked> alphabetically</label>
+        <label><input class="form-check-input" type="radio" name="alpharank" value="rank"> by rank.</label>
+      </div>
+    </div>
+
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-see" type="button" role="tab">What this shows:</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-mean" type="button" role="tab">What this means:</button></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="tab-see" role="tabpanel">
+        <div class="card mt-3"><div class="card-body">
+          <div data-tab-text="NED">
+            <p>NED development across the State is highly variable and distinctly concentrated around major cities (San Francisco Bay Area, Los Angeles, San Diego). The spread is also significant: the score in the lowest county, Tulare, is almost half of top-ranked Marin and Santa Clara's.</p>
+          </div>
+          <div data-tab-text="p" hidden>
+            <p>Place-based Conditions vary across the state and showcase a wide range: Tulare (lowest) scores less than half of San Francisco (highiest). Significant concentrations exist around industrial clusters on the coast, and unlike with the NED score, to a lesser extent in Northern California.</p>
+          </div>
+          <div data-tab-text="hsc" hidden>
+            <p>Human and Social Capital are still quite variable across California, but the spread is less extreme: San Luis Obispo (highest) scores less than double Alpine (lowest).</p>
+          </div>
+          <div data-tab-text="e" hidden>
+            <p>The Economic Activity Pillar showcases the most variation and spread. Santa Clara (highest score) scores more than triple what Imperial (lowest) reaches. Likewise, we see a much higher skew given by the highest scorers being so significantly high.</p>
+          </div>
+        </div></div>
+      </div>
+      <div class="tab-pane fade" id="tab-mean" role="tabpanel">
+        <div class="card mt-3"><div class="card-body">
+          <div data-tab-text="NED">
+            <p>NED is reflecting in large part the outcomes of 'agglomeration economies' (the benefits from firms and people being located near each other in industrial clusters). Geographic proximity boosts economic activity and enables the formation of strong social networks, increasing the supply of workers and businesses as well as the demand for an ecosystem around it. However, agglomeration economies can also produce marked inequalities from higher living costs, gentrification, and social exclusion. From the current vantage point view, this complexity is not perceptible, but the Pillars (<em>i.</em>) can start to uncover it.</p>
+            <p>Consistent with <a href="https://www.centreforcities.org/reader/office-politics/the-impact-of-agglomeration-on-the-economy/#:~:text=Agglomeration%20occurs%20because%20of%20the,larger%20cities%20and%20industrial%20concentrations." target="_blank" rel="noopener">recent research</a>, agglomeration economy spillovers (both positive and negative) are especially strong in the Financial and Business Service sectors and increase with scale, like in the world-class centers of the San Francisco Bay Area, Los Angeles, and San Diego&ndash; the regions with the highest NED scores.</p>
+          </div>
+          <div data-tab-text="p" hidden>
+            <p>This Pillar measures the ecosystems being built up around agglomeration, as well as geographic idiosyncracies at play. In addition to attracting Research and Development firms and universities, industrial cluster counties offer more in terms of basic needs and access to services. But, they trade off higher housing costs, longer commute times, and environmental health to name a few. Counties that are more isolated from high economic activity can still offer an empowering ecosystem for their residents (a merit for instance of widespread higher education systems), but this is decreasing with scale.</p>
+            <p>To note, the central counties forming a major ground transportation corridor for goods experience significantly worse environmental quality, which contributes to their worse Place-based Conditions.</p>
+          </div>
+          <div data-tab-text="hsc" hidden>
+            <p>Social and Human Capital will concentrate around economic activity, both due to demand (firms that can afford to pay for high skills will do so) and supply (highly skilled and connected individuals want to work in areas with lucrative returns). This more even concentration around cities is due in part to the greater presence of Higher Education as well as greater social capital. However, quality education systems can help share this more evenly (recalling the intersection with the Place-based Conditions Pillar).</p>
+            <p>Social networks can facilitate new matches being made and professional advancement, creating a reinforcing loop. As <a href="https://socialcapital.org" target="_blank" rel="noopener">Chetty <em>et al</em>, 2022</a> find, the strength of social networks is conducive to upward mobility, both for adults and for children in schools.</p>
+          </div>
+          <div data-tab-text="e" hidden>
+            <p>Given the sheer size and significance of California's economy, it is natural for Economic Acitivty to be concentrated around its main engines, the world-class industrial clusters. Agglomeration around them creates high demand for exogenous assets, which in turn create more prosperity and create a self-reinforcing loop. It follows that this decreases with scale.</p>
+            <p>Inequalities and wealth divides are especially apparent in counties with high exogenous economic growth (where people, firms, and assets move to due to demand, pricing out locals who are not able to tap into the high-earning workstreams), which is . The importance of the other Pillars is in keeping this in check.</p>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <p class="mt-4" id="toCounty"><em>Unpack the variation of NED in California by looking through each of its counties' particular conditions.</em></p>
+
+    <!-- County view -->
+    <h3 class="section">County NED</h3>
+    <p>Analyze individual counties' performance the NED way through the three subsequent levels of depth to identify the particular situation they're in.</p>
+    <ol>
+      <li>Start top left with the Pillars (i.) barometer, which shows the general balance forming inclusive, sustainable economic development.<br>
+        <em>Ex: large magnitudes (Los Angeles) and lack of balance (Butte) showcase the variety of county experiences.</em></li>
+      <li>Dig deeper with the eight Subjects (ii.) on the right showing the major categories underlying each Pillar.<br>
+        <em>Ex: significant differences within Pillars (Lassen, Economic Activity and Place-based Conditions) or Santa Clara (Economic Activity) highlight how balance (or imbalance) can scale whatever a county's means are.</em></li>
+      <li>Finally, examine the distribution of Topics (iii., below) rankings to see specifically where counties specialize, and where they are weaker.<br>
+        <em>Ex: Skewed higher spreads (San Francisco) evidence the need for targeted approaches to comparatively improve local NED, whereas more concentrated lower rankings (Imperial) or widespread scores (Amador) suggest a comprehensive economic development plan is required.</em></li>
+    </ol>
+    <p><em>Start by selecting a county using the dropdown menu below, and hover over the figures for more information. For simplification, Place-based Conditions, Human and Social Capital, and Economic Activity will be respectively shortened to PbC, HSC, and EA.</em></p>
+
+    <div class="row">
+      <div class="col-sm-6 col-md-3">
+        <label class="visually-hidden" for="county-select">County</label>
+        <select id="county-select" class="form-select"></select>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-6"><div id="county-pillars" class="graph"><div class="loading">Loading&hellip;</div></div></div>
+      <div class="col-md-6"><div id="county-flower" class="graph"></div></div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-12"><div id="county-topics" class="graph"></div></div>
+    </div>
+
+    <p class="mt-4"><em>Continue onto the <a href="about.html">About this tool</a> page to read more about the NED approach and potential applications of this tool, and explore the <a href="methodology.html">Methodology</a> for the technical decisions that went into its development.</em></p>
+  </main>
+
+  <footer class="footer">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span>Copyright &copy; 2023 Alessandro Conway. All rights reserved.</span>
+      <a href="#">Return to top</a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.20.0/plotly.min.js"></script>
+  <script src="assets/ned-data.js"></script>
+  <script src="assets/ned-app.js"></script>
+</body>
+</html>
